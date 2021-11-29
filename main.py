@@ -41,7 +41,7 @@ def run_upload(event, context):
     # 1. Insert new row to the Cloud SQL
     insert(event['name'], event['timeCreated'])
     # 2. Hit the TorchServe inference API
-    predict()
+    predict(event['bucket'], event['name'])
     # 3. Update Cloud SQL - mark as inferred, and path for the masks
     # update()
 
@@ -49,8 +49,10 @@ def insert(path_original, created_on):
     # request_json = request.get_json()
     table_field1 = "path_original"
     table_field2 = "created_on"
+    table_field3 = "is_inferenced"
+    table_field4 = "is_inspected"
 
-    stmt = sqlalchemy.text('insert into {} ({}, {}) values ({}, {})'.format(table_name, table_field1, table_field2, path_original, created_on))
+    stmt = sqlalchemy.text('insert into {} ({}, {}, {}, {}) values ({}, {}, {}, {})'.format(table_name, table_field1, table_field2, table_field3, table_field4, "\'" + path_original + "\'", "\'" + created_on + "\'", "FALSE", "FALSE"))
     
     db = sqlalchemy.create_engine(
       sqlalchemy.engine.url.URL(
@@ -72,8 +74,8 @@ def insert(path_original, created_on):
         print('Error: {}'.format(str(e)))
     print('success')
 
-def predict(original_path):
-    print('Predict: ', original_path)
+def predict(bucket, original_path):
+    print('Predict: ', bucket + "/" + original_path)
 
 def update():
     # request_json = request.get_json()
