@@ -49,7 +49,9 @@ def run_upload(event, context):
     # 1. Insert new row to the Cloud SQL
     insert(event['name'], event['timeCreated'])
     # 2. Hit the TorchServe inference API
-    predictions = predict(event['bucket'], event['name'])
+    filename_split = event['name'].split("/")
+    original_filename = filename_split[-1]
+    predictions = predict(event['bucket'], event['name'], original_filename)
     # 3. Update Cloud Storage - upload masked images to 'images-inferre'
     update_gcs(predictions)
     # 4. Update Cloud SQL - mark as inferred, and path for the masks
@@ -84,20 +86,21 @@ def insert(path_original, created_on):
         print('Error: {}'.format(str(e)))
     print('success')
 
-def predict(bucket, original_path):
-    print('Predict: ', bucket + "/" + original_path)
+def predict(bucket, original_path, original_filename):
+    print('Predict: ', bucket + "/" + original_filename)
     # TODO: integrate with AI Prediction url
     print("Predict_test: ",sample_output_dent_path)
 
     # return sample images
     res = {
         "path_original" : original_path,
+        "original_filename": original_filename,
         "output_dent_path" : sample_output_dent_path,
         "output_scratch_path" : sample_output_scratch_path,
         "output_spacing_path" : sample_output_spacing_path,
-        "destination_blob_name_dent" : "masks-dent/" + original_path,
-        "destination_blob_name_scratch" : "masks-scratch/" + original_path,
-        "destination_blob_name_spacing" : "masks-spacing/" + original_path
+        "destination_blob_name_dent" : "masks-dent/" + original_filename,
+        "destination_blob_name_scratch" : "masks-scratch/" + original_filename,
+        "destination_blob_name_spacing" : "masks-spacing/" + original_filename
     }
     return res
 
@@ -105,12 +108,12 @@ def update_gcs(predictions):
     storage_client = storage.Client()
 
     bucket_name = "images-inferred"
-    output_dent_path = predictions.output_dent_path
-    output_scratch_path = predictions.output_scratch_path
-    output_spacing_path = predictions.output_spacing_path
-    destination_blob_name_dent = predictions.destination_blob_name_dent
-    destination_blob_name_scratch = predictions.destination_blob_name_scratch
-    destination_blob_name_spacing = predictions.destination_blob_name_spacing
+    output_dent_path = predictions["output_dent_path"]
+    output_scratch_path = predictions["output_scratch_path"]
+    output_spacing_path = predictions["output_spacing_path"]
+    destination_blob_name_dent = predictions["destination_blob_name_dent"]
+    destination_blob_name_scratch = predictions["destination_blob_name_scratch"]
+    destination_blob_name_spacing = predictions["destination_blob_name_spacing"]
 
     def upload_blob(bucket_name, source_file_name, destination_blob_name):
         """Uploads a file to the bucket."""
@@ -142,7 +145,7 @@ def update_psql(predictions):
     # table_field_value = "GCF-test1"
     
     # TODO: update field with input_path as path_original
-    stmt = sqlalchemy.text('update {} set {}={}, {}={}, {}={} where {}={}'.format(table_name, table_field_dent, predictions.destination_blob_name_dent, table_field_scratch), predictions.destination_blob_name_scratch, table_field_spacing, predictions.destination_blob_name_spacing, table_field_key, predictions.path_original)
+    stmt = sqlalchemy.text('update {} set {}={}, {}={}, {}={} where {}={}'.format(table_name, table_field_dent, predictions["destination_blob_name_dent"], table_field_scratch), predictions["destination_blob_name_scratch"], table_field_spacing, predictions["destination_blob_name_spacing"], table_field_key, predictions["path_original"])
     """
     update {table_name} 
       set {table_field_dent}={predictions.destination_blob_name_dent}, {table_field_scratch}={predictions.destination_blob_name_scratch}, {table_field_spacing}={predictions.destination_blob_name_spacing}
