@@ -120,7 +120,7 @@ def update_gcs(predictions):
         bucket = storage_client.bucket(bucket_name)
         blob = bucket.blob(destination_blob_name)
 
-        blob.upload_from_file(source_file_name)
+        blob.upload_from_filename(source_file_name)
 
         print(
             "File {} uploaded to {}.".format(
@@ -145,7 +145,7 @@ def update_psql(predictions):
     # table_field_value = "GCF-test1"
     
     # TODO: update field with input_path as path_original
-    stmt = sqlalchemy.text('update {} set {}={}, {}={}, {}={} where {}={}'.format(table_name, table_field_dent, predictions["destination_blob_name_dent"], table_field_scratch), predictions["destination_blob_name_scratch"], table_field_spacing, predictions["destination_blob_name_spacing"], table_field_key, predictions["path_original"])
+    stmt = sqlalchemy.text('update {} set {}={}, {}={}, {}={} where {}={}'.format(table_name, table_field_dent, predictions["destination_blob_name_dent"], table_field_scratch, predictions["destination_blob_name_scratch"], table_field_spacing, predictions["destination_blob_name_spacing"], table_field_key, predictions["path_original"]))
     """
     update {table_name} 
       set {table_field_dent}={predictions.destination_blob_name_dent}, {table_field_scratch}={predictions.destination_blob_name_scratch}, {table_field_spacing}={predictions.destination_blob_name_spacing}
