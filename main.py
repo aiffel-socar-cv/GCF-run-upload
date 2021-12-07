@@ -102,7 +102,7 @@ def predict(bucket, original_path):
     return res
 
 def update_gcs(predictions):
-    storage_client = storage.Client.from_service_account_json('./aiffel-gn-3-1dcb97107eaa.json')
+    storage_client = storage.Client()
 
     bucket_name = "images-inferred"
     output_dent_path = predictions.output_dent_path
