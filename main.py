@@ -175,6 +175,3 @@ def update_psql(predictions):
     print('success')
 
 
-
-#Test
-predict("images-original", "img_0253.png")
