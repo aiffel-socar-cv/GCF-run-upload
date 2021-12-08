@@ -55,7 +55,7 @@ def run_upload(event, context):
     # 3. Update Cloud Storage - upload masked images to 'images-inferre'
     update_gcs(predictions)
     # 4. Update Cloud SQL - mark as inferred, and path for the masks
-    update_psql(predictions)
+    update_psql(predictions, event['timeCreated'])
 
 def insert(path_original, created_on):
     # request_json = request.get_json()
@@ -133,19 +133,20 @@ def update_gcs(predictions):
     upload_blob(bucket_name, output_spacing_path, destination_blob_name_spacing)
 
 
-def update_psql(predictions):
+def update_psql(predictions, inferenced_on):
     # request_json = request.get_json()
     # table_field = "path_original"
     table_field_key = "path_original"
     table_field_dent = "path_inference_dent"
     table_field_scratch = "path_inference_scratch"
     table_field_spacing = "path_inference_spacing"
+    table_field_inferenced = "inferenced_on"
 
 
     # table_field_value = "GCF-test1"
     
     # TODO: update field with input_path as path_original
-    stmt = sqlalchemy.text('update {} set {}=\'{}\', {}=\'{}\', {}=\'{}\' where {}=\'{}\''.format(table_name, table_field_dent, "\'" + predictions["destination_blob_name_dent"] + "\'" , table_field_scratch, "\'" + predictions["destination_blob_name_scratch"]+ "\'", table_field_spacing, "\'" + predictions["destination_blob_name_spacing"] + "\'", table_field_key, "\'" + predictions["path_original"] + "\'"))
+    stmt = sqlalchemy.text('update {} set {}=\'{}\', {}=\'{}\', {}=\'{}\', {}=\'{}\' where {}=\'{}\''.format(table_name, table_field_dent, predictions["destination_blob_name_dent"] , table_field_scratch, predictions["destination_blob_name_scratch"], table_field_spacing, predictions["destination_blob_name_spacing"], table_field_inferenced, inferenced_on, table_field_key, predictions["path_original"]))
     """
     update {table_name} 
       set {table_field_dent}={predictions.destination_blob_name_dent}, {table_field_scratch}={predictions.destination_blob_name_scratch}, {table_field_spacing}={predictions.destination_blob_name_spacing}
