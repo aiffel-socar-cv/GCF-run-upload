@@ -90,6 +90,8 @@ def predict(bucket, original_path, original_filename):
     print('Predict: ', bucket + "/" + original_filename)
     # TODO: integrate with AI Prediction url
     print("Predict_test: ",sample_output_dent_path)
+    # sample payload
+    # return [{"class": "dent", "mask": result.squeeze().tolist(), "confidence": conf_score}]
 
     # return sample images
     res = {
@@ -100,7 +102,8 @@ def predict(bucket, original_path, original_filename):
         "output_spacing_path" : sample_output_spacing_path,
         "destination_blob_name_dent" : "masks-dent/" + original_filename,
         "destination_blob_name_scratch" : "masks-scratch/" + original_filename,
-        "destination_blob_name_spacing" : "masks-spacing/" + original_filename
+        "destination_blob_name_spacing" : "masks-spacing/" + original_filename,
+        "conf_score": 0.3
     }
     return res
 
@@ -141,12 +144,13 @@ def update_psql(predictions, inferenced_on):
     table_field_scratch = "path_inference_scratch"
     table_field_spacing = "path_inference_spacing"
     table_field_inferenced = "inferenced_on"
+    table_field_conf_score = "conf_score"
 
 
     # table_field_value = "GCF-test1"
     
     # TODO: update field with input_path as path_original
-    stmt = sqlalchemy.text('update {} set {}=\'{}\', {}=\'{}\', {}=\'{}\', {}=\'{}\' where {}=\'{}\''.format(table_name, table_field_dent, predictions["destination_blob_name_dent"] , table_field_scratch, predictions["destination_blob_name_scratch"], table_field_spacing, predictions["destination_blob_name_spacing"], table_field_inferenced, inferenced_on, table_field_key, predictions["path_original"]))
+    stmt = sqlalchemy.text('update {} set {}=\'{}\', {}=\'{}\', {}=\'{}\', {}=\'{}\', {}=\'{}\' where {}=\'{}\''.format(table_name, table_field_dent, predictions["destination_blob_name_dent"] , table_field_scratch, predictions["destination_blob_name_scratch"], table_field_spacing, predictions["destination_blob_name_spacing"], table_field_inferenced, inferenced_on, table_field_conf_score, predictions["conf_score"], table_field_key, predictions["path_original"]))
     """
     update {table_name} 
       set {table_field_dent}={predictions.destination_blob_name_dent}, {table_field_scratch}={predictions.destination_blob_name_scratch}, {table_field_spacing}={predictions.destination_blob_name_spacing}
