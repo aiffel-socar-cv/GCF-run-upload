@@ -137,9 +137,9 @@ def update_gcs(predictions):
             )
         )
 
-    upload_blob(bucket_name, output_dent_path, destination_blob_name_dent)
-    upload_blob(bucket_name, output_scratch_path, destination_blob_name_scratch)
-    upload_blob(bucket_name, output_spacing_path, destination_blob_name_spacing)
+    # upload_blob(bucket_name, output_dent_path, destination_blob_name_dent)
+    # upload_blob(bucket_name, output_scratch_path, destination_blob_name_scratch)
+    # upload_blob(bucket_name, output_spacing_path, destination_blob_name_spacing)
 
 
 def update_psql(predictions, inferenced_on):
