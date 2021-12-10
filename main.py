@@ -53,7 +53,7 @@ def run_upload(event, context):
     original_filename = filename_split[-1]
     predictions = predict(event['bucket'], event['name'], original_filename)
     # 3. Update Cloud Storage - upload masked images to 'images-inferre'
-    update_gcs(predictions)
+    # update_gcs(predictions)
     # 4. Update Cloud SQL - mark as inferred, and path for the masks
     update_psql(predictions, event['timeCreated'])
 
@@ -93,6 +93,9 @@ def predict(bucket, original_path, original_filename):
     # sample payload
     # return [{"class": "dent", "mask": result.squeeze().tolist(), "confidence": conf_score}]
 
+    png_filename = original_filename.split(".")[-2] + ".png"
+
+
     # return sample images
     res = {
         "path_original" : original_path,
@@ -100,11 +103,14 @@ def predict(bucket, original_path, original_filename):
         "output_dent_path" : sample_output_dent_path,
         "output_scratch_path" : sample_output_scratch_path,
         "output_spacing_path" : sample_output_spacing_path,
-        "destination_blob_name_dent" : "masks-dent/" + original_filename,
-        "destination_blob_name_scratch" : "masks-scratch/" + original_filename,
-        "destination_blob_name_spacing" : "masks-spacing/" + original_filename,
-        "conf_score": 0.3
+        "destination_blob_name_dent" : "masks-dent/" + png_filename,
+        "destination_blob_name_scratch" : "masks-scratch/" + png_filename,
+        "destination_blob_name_spacing" : "masks-spacing/" + png_filename,
+        "conf_score_dent": 0.3,
+        "conf_score_scratch": 0.3,
+        "conf_score_spacing": 0.3
     }
+
     return res
 
 def update_gcs(predictions):
@@ -144,13 +150,16 @@ def update_psql(predictions, inferenced_on):
     table_field_scratch = "path_inference_scratch"
     table_field_spacing = "path_inference_spacing"
     table_field_inferenced = "inferenced_on"
-    table_field_conf_score = "conf_score"
+    table_field_conf_score_dent = "conf_score_dent"
+    table_field_conf_score_scratch = "conf_score_scratch"
+    table_field_conf_score_spacing = "conf_score_spacing"
+
 
 
     # table_field_value = "GCF-test1"
     
     # TODO: update field with input_path as path_original
-    stmt = sqlalchemy.text('update {} set {}=\'{}\', {}=\'{}\', {}=\'{}\', {}=\'{}\', {}={} where {}=\'{}\''.format(table_name, table_field_dent, predictions["destination_blob_name_dent"] , table_field_scratch, predictions["destination_blob_name_scratch"], table_field_spacing, predictions["destination_blob_name_spacing"], table_field_inferenced, inferenced_on, table_field_conf_score, predictions["conf_score"], table_field_key, predictions["path_original"]))
+    stmt = sqlalchemy.text('update {} set {}=\'{}\', {}=\'{}\', {}=\'{}\', {}=\'{}\', {}={}, {}={}, {}={} where {}=\'{}\''.format(table_name, table_field_dent, predictions["destination_blob_name_dent"] , table_field_scratch, predictions["destination_blob_name_scratch"], table_field_spacing, predictions["destination_blob_name_spacing"], table_field_inferenced, inferenced_on, table_field_conf_score_dent, predictions["conf_score_dent"],table_field_conf_score_scratch, predictions["conf_score_scratch"],table_field_conf_score_spacing, predictions["conf_score_spacing"], table_field_key, predictions["path_original"]))
     """
     update {table_name} 
       set {table_field_dent}={predictions.destination_blob_name_dent}, {table_field_scratch}={predictions.destination_blob_name_scratch}, {table_field_spacing}={predictions.destination_blob_name_spacing}
